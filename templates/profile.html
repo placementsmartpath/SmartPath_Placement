@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>SmartPath | Complete Profile</title>
+</head>
+<body>
+    <div class="glass-card">
+        <h2 style="color: #00d4ff;">Complete Student Profile</h2>
+        <form action="/profile" method="POST">
+            <div class="input-grid">
+                <input type="text" name="branch" placeholder="Branch" required>
+                <input type="number" step="0.01" name="cgpa" placeholder="CGPA" required>
+                <input type="number" name="backlogs" placeholder="Backlogs">
+                <input type="number" step="0.01" name="tenth" placeholder="10th %">
+                <input type="number" step="0.01" name="twelfth" placeholder="12th %">
+                <input type="number" name="grad" placeholder="Grad Year">
+                <input type="number" name="gap" placeholder="Gap Years">
+                
+                <input type="text" name="skills" placeholder="Skills (Python, ML, SQL)">
+                <input type="text" name="subjects" placeholder="Core Subjects">
+                <input type="text" name="p_title" placeholder="Project Title">
+                <textarea name="p_desc" placeholder="Project Description" style="grid-column: span 2;"></textarea>
+                <input type="text" name="intern" placeholder="Internships">
+                <input type="text" name="certs" placeholder="Certifications">
+                
+                <input type="text" name="github" placeholder="GitHub Link">
+                <input type="text" name="linkedin" placeholder="LinkedIn Link">
+                <input type="text" name="leetcode" placeholder="LeetCode Handle">
+                <select name="p_type">
+                    <option value="On-Campus">On-Campus</option>
+                    <option value="Off-Campus">Off-Campus</option>
+                </select>
+                <input type="text" name="loc" placeholder="Preferred Location">
+                <input type="text" name="langs" placeholder="Languages Known">
+                <select name="relocate">
+                    <option value="Yes">Relocate: Yes</option>
+                    <option value="No">Relocate: No</option>
+                </select>
+            </div>
+            <button type="submit">Save & Submit Profile</button>
+        </form>
+    </div>
+</body>
+</html>

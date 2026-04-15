@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Company Dashboard | SmartPath</title>
+</head>
+<body>
+    <div class="glass-card" style="max-width: 900px; margin: 30px auto; text-align: center;">
+        <h1 style="color: #00d4ff;">Welcome, {{ company_name }}!</h1>
+        <p>Manage your job postings and find the best talent.</p>
+
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 40px;">
+            <div style="padding: 20px; border: 1px solid #2ecc71; border-radius: 15px; flex: 1;">
+                <h3>Post a New Job</h3>
+                <p style="font-size: 13px; color: #ccc;">Create requirements for students.</p>
+                <button onclick="location.href='/post_job'" style="background: #27ae60;">Add Job Posting</button>
+            </div>
+
+            <div style="padding: 20px; border: 1px solid #f1c40f; border-radius: 15px; flex: 1;">
+                <h3>View Applicants</h3>
+                <p style="font-size: 13px; color: #ccc;">See students who are eligible.</p>
+                <button onclick="location.href='/view_applicants'" style="background: #f39c12;">Check Matches</button>
+            </div>
+        </div>
+
+        <br><br>
+        <a href="/logout" style="color: #ff4d4d; text-decoration: none;">Logout</a>
+    </div>
+</body>
+</html>

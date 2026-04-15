@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPath | Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="glass-card" style="max-width: 450px;">
+        <h2 style="color: #00d4ff; text-align: center;">Create Account</h2>
+        <form action="/register" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="John Doe" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="john@example.com" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Create Password" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Mobile Number</label>
+                <input type="text" name="mobile" placeholder="+91 0000000000" required>
+            </div>
+            <button type="submit">Register Now</button>
+        </form>
+        <p style="text-align: center; margin-top: 20px; font-size: 14px;">
+            Already have an account? <a href="/" style="color: #00d4ff; text-decoration: none;">Login Here</a>
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>View Applicants | SmartPath</title>
+</head>
+<body>
+    <div class="glass-card" style="max-width: 1100px; margin: 30px auto;">
+        <h2 style="color: #00d4ff; text-align: center;">Potential Candidate Matches</h2>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; color: white;">
+            <thead>
+                <tr style="border-bottom: 2px solid #00d4ff; background: rgba(0, 212, 255, 0.1);">
+                    <th style="padding: 12px; text-align: left;">Student Name</th>
+                    <th style="padding: 12px; text-align: left;">Job Role</th>
+                    <th style="padding: 12px; text-align: center;">Student CGPA</th>
+                    <th style="padding: 12px; text-align: center;">Min. Required</th>
+                    <th style="padding: 12px; text-align: left;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if jobs %}
+                    {% for job in jobs %}
+                        {% for student in students %}
+                            <tr style="border-bottom: 1px solid #444;">
+                                <td style="padding: 12px;">{{ student.full_name }}</td>
+                                <td style="padding: 12px; color: #00d4ff;">{{ job.job_role_title }}</td>
+                                <td style="padding: 12px; text-align: center;">{{ student.current_cgpa }}</td>
+                                <td style="padding: 12px; text-align: center;">{{ job.min_cgpa }}</td>
+                                <td style="padding: 12px;">
+                                    {% if student.current_cgpa is not none and job.min_cgpa is not none %}
+                                        {% if student.current_cgpa|float >= job.min_cgpa|float %}
+                                            <b style="color: #2ecc71;">Eligible ✅</b>
+                                        {% else %}
+                                            <b style="color: #ff4d4d;">Not Eligible ❌</b>
+                                        {% endif %}
+                                    {% else %}
+                                        <i style="color: #888;">Data Missing</i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 50px; color: #f1c40f;">
+                            <h3>No Jobs Found! ⚠️</h3>
+                            <p>Aapne abhi tak koi job post nahi ki hai. Pehle "Add Job Posting" par jaiye.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table> <div style="text-align: center; margin-top: 30px;">
+            <button onclick="location.href='/company_dashboard'" style="padding: 10px 25px; cursor: pointer;">Back to Dashboard</button>
+        </div>
+    </div>
+</body>
+</html>

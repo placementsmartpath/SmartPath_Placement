@@ -1,0 +1,17 @@
+:root { --primary: #3498db; --bg: #f4f7f6; --dark: #2c3e50; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+.navbar { width: 100%; background: var(--dark); padding: 15px; color: white; display: flex; justify-content: space-around; align-items: center; margin-bottom: 20px; }
+.navbar a { color: white; text-decoration: none; margin: 0 10px; }
+
+.container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 90%; max-width: 400px; margin-bottom: 20px; }
+.profile-container { max-width: 800px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.full-width { grid-column: span 2; }
+
+input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+button:hover { background: #2980b9; }
+
+.flash-msg { padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center; background: #e1f5fe; color: #0288d1; border: 1px solid #b3e5fc; }

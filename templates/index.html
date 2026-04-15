@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartPath AI | Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="glass-card" style="text-align: center; max-width: 600px;">
+        <h1 style="color: #00d4ff;">SmartPath AI</h1>
+        <p style="margin-bottom: 30px;">Choose your portal to continue</p>
+
+        <div style="display: flex; gap: 20px; justify-content: center;">
+            <div style="padding: 20px; border: 1px solid #00d4ff; border-radius: 15px; flex: 1;">
+                <h3 style="margin-top: 0;">Students</h3>
+                <button onclick="location.href='/login'">Login / Register</button>
+            </div>
+
+            <div style="padding: 20px; border: 1px solid #2ecc71; border-radius: 15px; flex: 1;">
+                <h3 style="margin-top: 0;">Companies</h3>
+                <button onclick="location.href='/company_login'" style="background: linear-gradient(90deg, #2ecc71, #27ae60);">Login / Register</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

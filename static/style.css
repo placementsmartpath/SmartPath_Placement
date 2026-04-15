@@ -1,0 +1,41 @@
+body {
+    background: radial-gradient(circle at center, #0b1a2a, #1a2a6c, #000000);
+    background-attachment: fixed;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    width: 90%; max-width: 1000px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.input-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+
+input, textarea, select {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #00d4ff;
+    border-radius: 10px;
+    padding: 12px; color: white; width: 100%; box-sizing: border-box;
+}
+
+input:focus { box-shadow: 0 0 10px #00d4ff; outline: none; }
+
+button {
+    background: linear-gradient(90deg, #00d4ff, #008fb3);
+    border: none; padding: 15px; border-radius: 10px;
+    color: white; font-weight: bold; cursor: pointer;
+    transition: 0.3s; margin-top: 20px; width: 100%;
+}
+
+button:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4); }
+
+.sidebar { border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; }

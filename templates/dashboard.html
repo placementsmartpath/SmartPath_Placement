@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPath | Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="glass-card" style="max-width: 800px; text-align: center; margin: 40px auto;">
+        <h1 style="color: #00d4ff; margin-bottom: 10px;">SmartPath Dashboard</h1>
+        <p style="color: #ccc;">Welcome, <span style="color: #00d4ff; font-weight: bold;">{{ name }}</span></p>
+        
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
+
+        <div style="display: flex; justify-content: space-around; gap: 20px; flex-wrap: wrap;">
+            <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(0, 212, 255, 0.3); flex: 1; min-width: 250px;">
+                <h3 style="margin-top: 0;">Profile Status</h3>
+                <p style="font-size: 14px; color: #aaa;">Keep your profile updated for better AI matching.</p>
+                <button onclick="location.href='/profile'" style="margin-top: 15px; width: 100%;">Update Now</button>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(46, 204, 113, 0.3); flex: 1; min-width: 250px;">
+                <h3 style="margin-top: 0;">Placement Prediction</h3>
+                <p style="font-size: 14px; color: #aaa;">AI is analyzing your placement probability.</p>
+                <a href="/view_matches">
+                    <button style="background: linear-gradient(90deg, #2ecc71, #27ae60); margin-top: 15px; width: 100%; cursor: pointer; border: none; color: white; padding: 10px; border-radius: 5px;">View Matches</button>
+                </a>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <a href="/logout" style="color: #e74c3c; text-decoration: none; font-size: 14px;">Logout from Session</a>
+        </div>
+    </div>
+</body>
+</html>
