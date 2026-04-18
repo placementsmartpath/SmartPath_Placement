@@ -1,32 +1,24 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 import sqlite3
 import pickle
 import numpy as np
 import os
 
-# Load model
-try:
-    model = pickle.load(open('placement_model.pkl', 'rb'))
-except Exception as e:
-    print(f"Model Load Error: {e}")
-    model = None
-
 app = Flask(__name__)
 app.secret_key = "smartpath_secure_key"
 
-# --- DATABASE CONNECTION (SQLite) ---
+# --- DATABASE CONNECTION ---
 def get_db():
-    # Added timeout and WAL mode to prevent "Database Locked" errors
-    conn = sqlite3.connect('smartpath_db.sqlite', timeout=20)
+    conn = sqlite3.connect('smartpath_db.sqlite', timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL;')
     return conn
 
-# --- INITIALIZE DATABASE TABLES ---
+# --- INITIALIZE DATABASE ---
 def init_db():
     try:
         with get_db() as db:
-            # Student Table
+            # Student Table (Updated with all your columns)
             db.execute('''CREATE TABLE IF NOT EXISTS student (
                 student_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT, email TEXT UNIQUE, password TEXT, mobile_number TEXT,
@@ -38,26 +30,32 @@ def init_db():
                 placement_type TEXT, pref_location TEXT, languages_known TEXT, 
                 willing_to_relocate TEXT)''')
             
-            # Company Table
             db.execute('''CREATE TABLE IF NOT EXISTS company (
                 company_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 parent_company_name TEXT, email TEXT UNIQUE, 
                 password TEXT, industry_sector TEXT, company_website TEXT)''')
             
-            # Job Postings Table
             db.execute('''CREATE TABLE IF NOT EXISTS job_postings (
                 job_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 company_id INTEGER, job_role_title TEXT, dept_name TEXT, 
                 min_cgpa REAL, max_backlogs_allowed INTEGER, salary_package TEXT, 
                 job_location TEXT, mandatory_skills TEXT, job_description TEXT)''')
+            
+            # Student applications tracking table
+            db.execute('''CREATE TABLE IF NOT EXISTS applications (
+                app_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER,
+                job_id INTEGER,
+                status TEXT DEFAULT 'Pending',
+                applied_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+            
             db.commit()
     except Exception as e:
         print(f"Database Init Error: {e}")
 
 init_db()
 
-# --- ROUTES ---
-
+# --- AUTHENTICATION ---
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -72,23 +70,25 @@ def register():
                 db.commit()
             return redirect('/login')
         except Exception as e:
-            return f"Error: {e}"
+            return f"Registration Error: {e}"
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
         with get_db() as db:
-            user = db.execute("SELECT * FROM student WHERE email=? AND password=?", 
-                           (request.form['email'], request.form['password'])).fetchone()
+            user = db.execute("SELECT * FROM student WHERE email=? AND password=?", (email, password)).fetchone()
         if user:
             session['student_id'] = user['student_id']
             session['name'] = user['full_name']
+            session['email'] = user['email']
             return redirect('/dashboard')
-        else:
-            return "Invalid Student Credentials"
+        return "Invalid Credentials"
     return render_template('login.html')
 
+# --- STUDENT FEATURES ---
 @app.route('/dashboard')
 def dashboard():
     if 'student_id' not in session: return redirect('/login')
@@ -97,143 +97,198 @@ def dashboard():
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'student_id' not in session: return redirect('/login')
-    sid = session['student_id']
-    if request.method == 'POST':
-        try:
-            with get_db() as db:
-                sql = """UPDATE student SET 
-                         branch=?, current_cgpa=?, backlogs=?, tenth_percent=?, twelfth_percent=?, 
-                         grad_year=?, gap_years=?, tech_skills=?, core_subjects=?, project_title=?, 
-                         project_desc=?, internships=?, certifications=?, github_link=?, 
-                         linkedin_link=?, leetcode_handle=?, placement_type=?, pref_location=?, 
-                         languages_known=?, willing_to_relocate=? WHERE student_id=?"""
-                data = (
-                    request.form['branch'], request.form['cgpa'], request.form['backlogs'],
-                    request.form['tenth'], request.form['twelfth'], request.form['grad'],
-                    request.form['gap'], request.form['skills'], request.form['subjects'],
-                    request.form['p_title'], request.form['p_desc'], request.form['intern'],
-                    request.form['certs'], request.form['github'], request.form['linkedin'],
-                    request.form['leetcode'], request.form['p_type'], request.form['loc'],
-                    request.form['langs'], request.form['relocate'], sid
-                )
-                db.execute(sql, data)
-                db.commit()
-            return redirect('/dashboard')
-        except Exception as e:
-            return f"Profile Update Error: {e}"
-    return render_template('profile.html')
-
-@app.route('/company_register', methods=['GET', 'POST'])
-def company_register():
-    if request.method == 'POST':
-        try:
-            with get_db() as db:
-                db.execute("""INSERT INTO company (parent_company_name, email, password, industry_sector, company_website) 
-                                VALUES (?, ?, ?, ?, ?)""", 
-                                (request.form['cname'], request.form['email'], request.form['password'], 
-                                 request.form['sector'], request.form['website']))
-                db.commit()
-            return redirect('/company_login')
-        except Exception as e: return f"Error: {e}"
-    return render_template('company_register.html')
-
-@app.route('/company_login', methods=['GET', 'POST'])
-def company_login():
     if request.method == 'POST':
         with get_db() as db:
-            company = db.execute("SELECT * FROM company WHERE email=? AND password=?", 
-                                 (request.form['email'], request.form['password'])).fetchone()
-        if company:
-            session['company_id'] = company['company_id']
-            session['company_name'] = company['parent_company_name']
-            return redirect('/company_dashboard')
-        else: return "Invalid Company Credentials!"
-    return render_template('company_login.html')
-
-@app.route('/company_dashboard')
-def company_dashboard():
-    if 'company_id' not in session: return redirect('/company_login')
-    return render_template('company_dashboard.html', company_name=session['company_name'])
-
-@app.route('/post_job', methods=['GET', 'POST'])
-def post_job():
-    if 'company_id' not in session: return redirect('/company_login')
-    if request.method == 'POST':
-        try:
-            with get_db() as db:
-                sql = """INSERT INTO job_postings 
-                         (company_id, job_role_title, dept_name, min_cgpa, max_backlogs_allowed, 
-                          salary_package, job_location, mandatory_skills, job_description) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-                data = (
-                    session['company_id'], request.form['role'], request.form['dept'],
-                    request.form['cgpa'], request.form['backlogs'], request.form['package'],
-                    request.form['location'], request.form['skills'], request.form['desc']
-                )
-                db.execute(sql, data)
-                db.commit()
-            return redirect('/company_dashboard')
-        except Exception as e:
-            return f"Job Posting Error: {e}"
-    return render_template('post_job.html')
-
-@app.route('/view_applicants')
-def view_applicants():
-    if 'company_id' not in session: return redirect('/company_login')
-    with get_db() as db:
-        students = db.execute("SELECT * FROM student").fetchall()
-        jobs = db.execute("SELECT * FROM job_postings WHERE company_id=?", (session['company_id'],)).fetchall()
-    return render_template('view_applicants.html', students=students, jobs=jobs)
+            # Updating all columns including links
+            db.execute("""UPDATE student SET 
+                branch=?, current_cgpa=?, tech_skills=?, project_title=?, project_desc=?,
+                github_link=?, linkedin_link=?, leetcode_handle=?, placement_type=?
+                WHERE student_id=?""", 
+                (request.form.get('branch'), request.form.get('cgpa'), request.form.get('skills'), 
+                 request.form.get('p_title'), request.form.get('p_desc'),
+                 request.form.get('github'), request.form.get('linkedin'), request.form.get('leetcode'),
+                 request.form.get('p_type'), session['student_id']))
+            db.commit()
+        flash("Profile Updated Successfully!")
+        return redirect('/dashboard')
+    return render_template('profile.html')
 
 @app.route('/view_matches')
-def view_matches_student():
+def view_matches():
     if 'student_id' not in session: return redirect('/login')
     
     with get_db() as db:
         student = db.execute("SELECT * FROM student WHERE student_id=?", (session['student_id'],)).fetchone()
-        job = db.execute("SELECT * FROM job_postings ORDER BY job_id DESC LIMIT 1").fetchone()
-    
-    if not job:
-        return "No jobs available in the system yet."
+        all_jobs = db.execute("SELECT * FROM job_postings").fetchall()
+        
+        if not all_jobs:
+            return "<h1>No jobs available in database yet.</h1>"
 
-    try:
-        # 1. Final Match Score (Using ML Model)
-        features = np.array([[
-            float(student['tenth_percent'] or 0), 
-            float(student['twelfth_percent'] or 0), 
-            float(student['current_cgpa'] or 0) * 10, 
-            0 
-        ]])
-        score = round(model.predict_proba(features)[0][1] * 100, 1) if model else 75.0
+        eligible_jobs = []
+        for job in all_jobs:
+            # 1. Academic Score (Based on CGPA)
+            acad_score = 100 if float(student['current_cgpa'] or 0) >= float(job['min_cgpa'] or 0) else (float(student['current_cgpa'] or 0) / float(job['min_cgpa'] or 1)) * 100
+            
+            # 2. Skill Score (Basic NLP Match)
+            s_skills = set((student['tech_skills'] or "").lower().replace(',', ' ').split())
+            j_skills = set((job['mandatory_skills'] or "").lower().replace(',', ' ').split())
+            match_count = len(s_skills.intersection(j_skills))
+            skill_score = (match_count / len(j_skills) * 100) if j_skills else 0
+            
+            # 3. Overall Match Score
+            total_match = round((acad_score * 0.5) + (skill_score * 0.5), 1)
+            
+            job_dict = dict(job)
+            job_dict['match_score'] = total_match
+            job_dict['acad_score'] = round(acad_score, 1)
+            job_dict['skill_score'] = round(skill_score, 1)
+            eligible_jobs.append(job_dict)
 
-        # 2. Advanced Analytics Scores (Logic for Progress Bars)
-        # Academic Strength
-        acad_val = (float(student['current_cgpa'] or 0) / 10) * 100
-        if int(student['backlogs'] or 0) > 0: acad_val -= 10
-        acad_score = round(max(0, min(100, acad_val)), 1)
+        # 4. Project Recommendation Logic
+        p_title = (student['project_title'] or "").lower()
+        if 'prediction' in p_title or 'ml' in p_title:
+            next_p = "End-to-End Deployment with Docker & AWS"
+            advice = "Aapne prediction model banaya hai, ab isey cloud par deploy karke real-time API banayein."
+        elif 'web' in p_title or 'app' in p_title:
+            next_p = "Scalable Microservices with Redis Caching"
+            advice = "Full stack ke baad ab performance aur security (JWT) par focus karne wala project banayein."
+        else:
+            next_p = "Data-Driven Dashboard using React & Python"
+            advice = "Ek aisa project banayein jo complex data ko visualize kar sake."
 
-        # Technical Skills Match
-        job_skills = set(job['mandatory_skills'].lower().split(','))
-        stud_skills = set(student['tech_skills'].lower().split(','))
-        matches = job_skills.intersection(stud_skills)
-        skill_score = round((len(matches) / len(job_skills) * 100), 1) if job_skills else 50.0
+        # 5. Off-Campus Readiness Analysis
+        off_score = 0
+        if student['github_link']: off_score += 35
+        if student['leetcode_handle']: off_score += 35
+        if student['linkedin_link']: off_score += 30
 
-        # Experience Score
-        exp_score = 100 if student['internships'] and len(student['internships']) > 5 else 50
-
-    except Exception as e:
-        print(f"Prediction Error: {e}")
-        score, acad_score, skill_score, exp_score = 0, 0, 0, 0
-
-    msg = "Excellent Match!" if score >= 80 else "Good Match!" if score >= 50 else "Needs Improvement!"
+    # Sort: Best matches first
+    eligible_jobs = sorted(eligible_jobs, key=lambda x: x['match_score'], reverse=True)
     
     return render_template('result.html', 
-                           match_score=score, 
-                           acad_score=acad_score, 
-                           skill_score=skill_score, 
-                           exp_score=exp_score,
-                           message=msg, 
-                           job=job)
+                           jobs=eligible_jobs, 
+                           student=student, 
+                           next_p=next_p, 
+                           advice=advice, 
+                           off_score=off_score)
+
+# --- LOGIC TO SAVE APPLICATION ---
+@app.route('/apply/<int:job_id>')
+def apply_job(job_id):
+    if 'student_id' not in session:
+        return redirect('/login')
+    
+    with get_db() as db:
+        # Pehle check karein ki kahin student ne pehle hi apply toh nahi kiya?
+        check = db.execute("SELECT * FROM applications WHERE student_id=? AND job_id=?", 
+                          (session['student_id'], job_id)).fetchone()
+        
+        if not check:
+            db.execute("INSERT INTO applications (student_id, job_id) VALUES (?, ?)", 
+                       (session['student_id'], job_id))
+            db.commit()
+            flash("Successfully Applied!") # Success message ke liye
+        else:
+            flash("You have already applied for this job.")
+
+    # Apply karne ke baad wapas matches wale page par hi bhej dein
+        return redirect(url_for('view_matches'))
+
+# --- ROUTE FOR COMPANY LOGIN (Fixes 404 Error) ---
+@app.route('/company_login', methods=['GET', 'POST'])
+def company_login():
+    if request.method == 'POST':
+        return redirect('/company_dashboard')
+    return render_template('company_login.html')
+
+# --- ROUTE TO VIEW APPLICANTS ---
+@app.route('/company_dashboard')
+def company_dashboard():
+    with get_db() as db:
+        # Joining student and job tables to see details
+        applicants = db.execute("""
+            SELECT s.full_name, s.current_cgpa, s.github_link, j.job_role_title 
+            FROM applications a
+            JOIN student s ON a.student_id = s.student_id
+            JOIN job_postings j ON a.job_id = j.job_id
+        """).fetchall()
+    return render_template('company_dashboard.html', applicants=applicants)
+
+# --- COMPANY REGISTRATION ROUTE ---
+@app.route('/company_register', methods=['GET', 'POST'])
+def company_register():
+    if request.method == 'POST':
+        # Form se data nikalna (Company Table ke columns ke hissab se)
+        p_name = request.form.get('parent_company_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        sector = request.form.get('industry_sector')
+        website = request.form.get('company_website')
+
+        with get_db() as db:
+            try:
+                # Company table mein data insert karna
+                db.execute("""INSERT INTO company 
+                           (parent_company_name, email, password, industry_sector, company_website) 
+                           VALUES (?, ?, ?, ?, ?)""", 
+                           (p_name, email, password, sector, website))
+                db.commit()
+                return redirect(url_for('company_login')) # Success ke baad login par bhejein
+            except Exception as e:
+                return f"Registration Error: {e}"
+                
+    return render_template('company_register.html')
+
+@app.route('/post_job', methods=['GET', 'POST'])
+def post_job():
+    if request.method == 'POST':
+        # Form se data lena
+        title = request.form.get('job_role_title')
+        dept = request.form.get('dept_name')
+        salary = request.form.get('salary_package')
+        loc = request.form.get('job_location')
+        skills = request.form.get('mandatory_skills')
+        min_cgpa = request.form.get('min_cgpa')
+        
+        with get_db() as db:
+            db.execute("""INSERT INTO job_postings 
+                (job_role_title, dept_name, salary_package, job_location, mandatory_skills, min_cgpa) 
+                VALUES (?, ?, ?, ?, ?, ?)""", 
+                (title, dept, salary, loc, skills, min_cgpa))
+            db.commit()
+            return redirect(url_for('company_dashboard'))
+            
+    return render_template('post_job.html') 
+
+# --- ROUTE TO VIEW APPLICANTS (Linked to "Check Matches" button) ---
+# --- STEP 1: Route name must match your HTML button's href ---
+@app.route('/view_applicants')
+def view_applicants():
+    with get_db() as db:
+        # Fetching students who applied for jobs
+        applicants = db.execute("""
+            SELECT s.full_name, s.current_cgpa, s.tech_skills, s.github_link, j.job_role_title 
+            FROM applications a
+            JOIN student s ON a.student_id = s.student_id
+            JOIN job_postings j ON a.job_id = j.job_id
+            ORDER BY a.applied_date DESC
+        """).fetchall()
+    
+    # Check if 'company_dashboard.html' exists in templates folder
+    return render_template('company_dashboard.html', applicants=applicants)
+
+# --- REST OF THE ROUTES (Admin, Company, Logout) ---
+@app.route('/admin/manage')
+def admin_manage():
+    if 'email' not in session or session['email'] != 'sonaligpatil2006@gmail.com':
+        return "<h1>Unauthorized!</h1>", 403
+    with get_db() as db:
+        students = db.execute("SELECT * FROM student").fetchall()
+        companies = db.execute("SELECT * FROM company").fetchall()
+        jobs = db.execute("SELECT * FROM job_postings").fetchall()
+    return render_template('manage.html', students=students, companies=companies, jobs=jobs)
+
+
 
 @app.route('/logout')
 def logout():

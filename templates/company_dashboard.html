@@ -1,30 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Company Dashboard | SmartPath</title>
 </head>
 <body>
-    <div class="glass-card" style="max-width: 900px; margin: 30px auto; text-align: center;">
+    <div class="glass-card" style="max-width: 900px; margin: 30px auto; text-align: center; padding: 20px;">
         <h1 style="color: #00d4ff;">Welcome, {{ company_name }}!</h1>
         <p>Manage your job postings and find the best talent.</p>
 
         <div style="display: flex; gap: 20px; justify-content: center; margin-top: 40px;">
+            
             <div style="padding: 20px; border: 1px solid #2ecc71; border-radius: 15px; flex: 1;">
                 <h3>Post a New Job</h3>
                 <p style="font-size: 13px; color: #ccc;">Create requirements for students.</p>
-                <button onclick="location.href='/post_job'" style="background: #27ae60;">Add Job Posting</button>
+                <button onclick="location.href='/post_job'" style="background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+                    Add Job Posting
+                </button>
             </div>
 
             <div style="padding: 20px; border: 1px solid #f1c40f; border-radius: 15px; flex: 1;">
                 <h3>View Applicants</h3>
                 <p style="font-size: 13px; color: #ccc;">See students who are eligible.</p>
-                <button onclick="location.href='/view_applicants'" style="background: #f39c12;">Check Matches</button>
+                <button onclick="showApplicants()" style="background: #f39c12; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+                    Check Matches
+                </button>
             </div>
+            
+        </div>
+
+        <div id="applicantsBox" style="display: none; margin-top: 40px; text-align: left; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
+            <h2 style="color: #00d4ff; border-bottom: 2px solid rgba(0,212,255,0.3); padding-bottom: 10px;">Eligible Students</h2>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; color: white; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                <thead>
+                    <tr style="background: rgba(0, 212, 255, 0.2);">
+                        <th style="padding: 15px; text-align: center;">Student Name</th>
+                        <th style="padding: 15px; text-align: center;">Applied For</th>
+                        <th style="padding: 15px; text-align: center;">CGPA</th>
+                        <th style="padding: 15px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applicants %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <td style="padding: 12px; text-align: center;">{{ app.full_name }}</td>
+                        <td style="padding: 12px; text-align: center;">{{ app.job_role_title }}</td>
+                        <td style="padding: 12px; text-align: center;">{{ app.current_cgpa }}</td>
+                        <td style="padding: 12px; text-align: center;">
+                            <a href="{{ app.github_link }}" target="_blank" style="color: #2ecc71; text-decoration: none; font-weight: bold;">View Resume</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="padding: 30px; text-align: center; color: #aaa;">Abhi tak kisi student ne apply nahi kiya hai.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
         <br><br>
-        <a href="/logout" style="color: #ff4d4d; text-decoration: none;">Logout</a>
+        <a href="/logout" style="color: #ff4d4d; text-decoration: none; font-weight: bold;">Logout</a>
     </div>
+
+    <script>
+    function showApplicants() {
+        var x = document.getElementById("applicantsBox");
+        if (x.style.display === "none" || x.style.display === "") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    }
+    </script>
 </body>
 </html>
